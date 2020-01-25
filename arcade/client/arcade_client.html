@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <title>"test"</title>
+  </head>
+  <body>
+    <div id="signdiv">
+      имя правителя: <input id="username" type="text"></input><br>
+      название страны: <input id="countryname" type="text"></input>
+      <button id="start">Старт</button>
+    </div>
+    <div id="gamediv" style="display:none;">
+      <canvas id="ctx" width="256" height="256"></canvas>
+      <div id="info" style="width:500px;height:100px;overflow-y:scroll">
+        инфо
+      </div>
+      <button id="showworld">мир</button>
+      <button id="refresh">обновить</button>
+      <button id="step">цикл работы</button>
+      <div id="zonesdiv" style="display:none;">
+        <input id="build1" type="radio" name="build" value="residential">
+        <label for="build1">Жилые дома</label><br>
+        <input id="build2" type="radio" name="build" value="industrial">
+        <label for="build2">Завод</label><br>
+        <input id="build3" type="radio" name="build" value="mine">
+        <label for="build3">Шахта</label><br>
+        <input id="build4" type="radio" name="build" value="field">
+        <label for="build5">Сельхозугодья</label><br>
+        <input id="build5" type="radio" name="build" value="military">
+        <label for="build5">Военная база</label><br>
+      </div>
+      <br>
+      <div id="all_mess" style="width:500px;height:100px;overflow-y:scroll"></div>
+      <br>
+      <input id="msg" type="text" style="width:400px"></input>
+      <button id="sendmsg" style="width:100px">отправить</button>
+    </div>
+  </body>
+</html>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io();
+  var user;
+  var country;
+
+  var signdiv = document.getElementById('signdiv');
+  var zonesdiv = document.getElementById('zonesdiv');
+  var username = document.getElementById('username');
+  var countryname = document.getElementById('countryname');
+  var start = document.getElementById('start');
+  var showworld = document.getElementById('showworld');
+  var sendmsg = document.getElementById('sendmsg');
+  var msg = document.getElementById('msg');
+  var all_mess = document.getElementById('all_mess');
+  var build = document.getElementsByName('build');
+  var info = document.getElementById('info');
+  var refresh = document.getElementById('refresh');
+  var step = document.getElementById('step');
+
+  const canvas = document.getElementById('ctx');
+  const ctx = canvas.getContext("2d");
+  //const region = new Image();
+  const world = new Image();
+  const region_nature_zones = new Image();
+  const region_build_zones = new Image();
+  //region.src = "client/img/city.png";
+  world.src = "client/img/chunk.png";
+  region_nature_zones.src = "client/img/region_nature_zones.png";
+  region_build_zones.src = "client/img/region_build_zones.png";
+  ctx.font = '30px Arial';
+
+  let box = 16;
+  canvmode = 'world';
+  let current_world;
+  let current_region;
+
+  //отрисовка мира
+  socket.on('worldResponce', function(data) {
+    zonesdiv.style.display = 'none';
+    canvmode = 'world';
+    current_world = data;
+    for (var i = 0; i < box; i++) {
+      for (var j = 0; j < box; j++) {
+        if (data[i][j].relief === 0) {
+          ctx.drawImage(world, box*0, box*0, box, box, box*i, box*j, box, box);
+        }
+        else if (data[i][j].relief === 1) {
+          ctx.drawImage(world, box*1, box*0, box, box, box*i, box*j, box, box);
+        }
+        else if (data[i][j].relief === 2) {
+          ctx.drawImage(world, box*0, box*1, box, box, box*i, box*j, box, box);
+        }
+        else if (data[i][j].relief === 3) {
+          ctx.drawImage(world, box*1, box*1, box, box, box*i, box*j, box, box);
+        }
+      }
+    }
+    ctx.strokeStyle="#FF0000";
+    ctx.lineWidth=2;
+    for (var i = 0; i < 15; i++) {
+      for (var j = 0; j < 15; j++) {
+        if (data[i][j].owner != data[i+1][j].owner) {
+          ctx.beginPath();
+          ctx.moveTo((i*box)+box,j*box);
+          ctx.lineTo((i*box)+box,(j*box)+box);
+          ctx.stroke();
+        }
+        if (data[i][j].owner != data[i][j+1].owner) {
+          ctx.beginPath();
+          ctx.moveTo((i*box),(j*box)+box);
+          ctx.lineTo((i*box)+box,(j*box)+box);
+          ctx.stroke();
+        }
+      }
+    }
+	});
+
+  //отрисовка региона
+  socket.on('goToRegionResponce', function(data) {
+    zonesdiv.style.display = 'inline-block';
+    canvmode = 'region';
+    current_region = data;
+    for (var i = 0; i < box; i++) {
+      for (var j = 0; j < box; j++) {
+        if (data.zones[i][j].type == 'nature') {
+          if (data.zones[i][j].relief === 0) {
+            ctx.drawImage(region_nature_zones, box*0, box*0, box, box, box*i, box*j, box, box);
+          }
+          else if (data.zones[i][j].relief === 1) {
+            ctx.drawImage(region_nature_zones, box*1, box*0, box, box, box*i, box*j, box, box);
+          }
+          if (data.zones[i][j].resourceType === 1) {
+            ctx.drawImage(region_nature_zones, box*0, box*1, box, box, box*i, box*j, box, box);
+          }
+          if (data.zones[i][j].resourceType === 2) {
+            ctx.drawImage(region_nature_zones, box*1, box*1, box, box, box*i, box*j, box, box);
+          }
+        }
+        if (data.zones[i][j].type == 'houses') {
+          ctx.drawImage(region_build_zones, box*2, box*1, box, box, box*i, box*j, box, box);
+        }
+        if (data.zones[i][j].type == 'mine') {
+          ctx.drawImage(region_build_zones, box*0, box*1, box, box, box*i, box*j, box, box);
+        }
+        if (data.zones[i][j].type == 'fields') {
+          ctx.drawImage(region_build_zones, box*2, box*0, box, box, box*i, box*j, box, box);
+        }
+        if (data.zones[i][j].type == 'plant') {
+          ctx.drawImage(region_build_zones, box*1, box*1, box, box, box*i, box*j, box, box);
+        }
+        if (data.zones[i][j].type == 'militia') {
+          ctx.drawImage(region_build_zones, box*0, box*2, box, box, box*i, box*j, box, box);
+        }
+        if (data.zones[i][j].type == 'building') {
+          ctx.drawImage(region_build_zones, box*0, box*0, box, box, box*i, box*j, box, box);
+        }
+      }
+    }
+  });
+
+  //start game response
+  socket.on("signinResponce", function(data) {
+    if(data.success) {
+      signdiv.style.display = 'none';
+      gamediv.style.display = 'inline-block';
+    }
+    else {
+      alert("sign in failed");
+    }
+  });
+
+  //add message response
+  socket.on("add msg", function(data) {
+    all_mess.innerHTML += '<div>' + data.name + ": " + data.message + "</div>"
+  });
+
+  //start game
+  start.onclick = function() {
+    socket.emit("signin", {name:username.value, country:countryname.value});
+    user = username.value;
+    country = countryname.value;
+    world.onload = function() {
+      socket.emit('world');
+    }
+  };
+
+  showworld.onclick = function() {
+    socket.emit("world");
+  };
+
+  refresh.onclick = function() {
+    if (canvmode == 'region') {
+      socket.emit("goToRegion", {x:current_region.x, y:current_region.y, user:user});
+    }
+    if (canvmode == 'world') {
+      socket.emit("world");
+    }
+  };
+
+  step.onclick = function() {
+    socket.emit("step");
+    // быдлокод!
+    if (canvmode == 'region') {
+      socket.emit("goToRegion", {x:current_region.x, y:current_region.y, user:user});
+    }
+    if (canvmode == 'world') {
+      socket.emit("world");
+    }
+  };
+
+  //sending message
+  sendmsg.onclick = function() {
+    socket.emit('send msg', {message:msg.value, name:user});
+    socket.emit('world');
+  }
+
+  canvas.ondblclick = function() {
+    mx = Math.floor((event.offsetX)/16);
+    my = Math.floor((event.offsetY)/16);
+    if (canvmode == 'world') {
+      canvmode = 'region';
+      socket.emit("goToRegion", {x:mx, y:my, user:user});
+    }
+    if ((canvmode == 'region') & (current_region.zones[mx][my].relief != 0) & (current_region.owner == user)) {
+      if (build[0].checked) {
+          socket.emit("newBuild", {regX:current_region.x, regY:current_region.y, x:mx, y:my, type:'houses'});
+        }
+        else if (build[1].checked) {
+          socket.emit("newBuild", {regX:current_region.x, regY:current_region.y, x:mx, y:my, type:'plant'});
+        }
+        else if (build[2].checked & (current_region.zones[mx][my].resourceType == 2)) {
+          socket.emit("newBuild", {regX:current_region.x, regY:current_region.y, x:mx, y:my, type:'mine'});
+        }
+        else if (build[3].checked & (current_region.zones[mx][my].resourceType == 1)) {
+          socket.emit("newBuild", {regX:current_region.x, regY:current_region.y, x:mx, y:my, type:'fields'});
+        }
+        else if (build[4].checked) {
+          socket.emit("newBuild", {regX:current_region.x, regY:current_region.y, x:mx, y:my, type:'militia'});
+        }
+    }
+    //canvmode region build
+  }
+
+  canvas.onclick = function() {
+    mx = Math.floor((event.offsetX)/16);
+    my = Math.floor((event.offsetY)/16);
+    if (canvmode == 'world') {
+      info.innerHTML = 'владелецъ: ' + current_world[mx][my].owner;
+      info.innerHTML += '<div> название: ' + current_world[mx][my].name + "</div>"
+    }
+    if (canvmode == 'region') {
+      info.innerHTML = 'тип зоны: ' + current_region.zones[mx][my].type;
+      if (current_region.zones[mx][my].type == 'nature') {
+        info.innerHTML += '<div> рельеф: ' + current_region.zones[mx][my].relief + "</div>"
+        info.innerHTML += '<div> тип ресурсов: ' + current_region.zones[mx][my].resourceType + "</div>"
+        info.innerHTML += '<div> количество ресурсов: ' + current_region.zones[mx][my].resourceAmount + "</div>"
+      }
+      for (var i of current_region.zones[mx][my].resources) {
+        info.innerHTML += '<div> ресурса ' + i.type + ' ' + i.facilyty + "</div>"
+      }
+      for (var i of current_region.zones[mx][my].products) {
+        info.innerHTML += '<div> продукта ' + i.type + ' ' + i.facilyty + "</div>"
+      }
+      info.innerHTML += '<div> проблемность: ' + current_region.zones[mx][my].problems + "</div>"
+    }
+  }
+
+</script>
