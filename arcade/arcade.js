@@ -1,7 +1,7 @@
 createZone = function(type, what) {
     zone = {type:type};
     if (type == 'nature') {
-      // 0 - вода 1 - земля
+      // 0 - вода 1 - земля 2 - абандон
       zone.relief = Math.floor(Math.random()*2);
       // 0 - немае ресуроу 1 - руда 2 - плодородная земля
       zone.resourceType = Math.floor(Math.random()*3);
@@ -17,7 +17,7 @@ createZone = function(type, what) {
       zone.products = [];
       zone.problems = 0;
       zone.resources.push({type:'workers', neednorm:1, facilyty:1});
-      zone.products.push({type:'goods', prodnorm:1, facilyty:0});
+      zone.products.push({type:'goods', prodnorm:2, facilyty:0});
     }
     if (type == 'plant') {
       zone.resources = [];
@@ -25,14 +25,14 @@ createZone = function(type, what) {
       zone.problems = 0;
       zone.resources.push({type:'workers', neednorm:1, facilyty:1});
       zone.resources.push({type:'ores', neednorm:1, facilyty:1});
-      zone.products.push({type:'things', prodnorm:2, facilyty:0});
+      zone.products.push({type:'things', prodnorm:3, facilyty:0});
     }
     if (type == 'mine') {
       zone.resources = [];
       zone.products = [];
       zone.problems = 0;
       zone.resources.push({type:'workers', neednorm:1, facilyty:1});
-      zone.products.push({type:'ores', prodnorm:1, facilyty:0});
+      zone.products.push({type:'ores', prodnorm:2, facilyty:0});
     }
     if (type == 'houses') {
       zone.resources = [];
@@ -40,7 +40,7 @@ createZone = function(type, what) {
       zone.problems = 0;
       zone.resources.push({type:'goods', neednorm:1, facilyty:1});
       zone.resources.push({type:'things', neednorm:1, facilyty:1});
-      zone.products.push({type:'workers', prodnorm:2, facilyty:0});
+      zone.products.push({type:'workers', prodnorm:3, facilyty:0});
     }
     if (type == 'militia') {
       zone.resources = [];
@@ -50,18 +50,23 @@ createZone = function(type, what) {
       zone.resources.push({type:'things', neednorm:1, facilyty:1});
       zone.resources.push({type:'workers', neednorm:1, facilyty:1});
     }
+    if (type == 'palace') {
+      zone.resources = [];
+      zone.products = [];
+      zone.problems = 0;
+      zone.resources.push({type:'goods', neednorm:1, facilyty:10});
+      zone.resources.push({type:'things', neednorm:1, facilyty:10});
+      zone.resources.push({type:'workers', neednorm:1, facilyty:10});
+    }
     if (type == 'building') {
       zone.what = what;
       zone.cycles = 2;
-    }
-    if (type == 'abandoned') {
-      zone.what = what;
     }
     return zone;
 }
 
 createRegion = function(x, y, name, owner) {
-    region = {x:x, y:y, name:name, owner:owner, zones:[]};
+    region = {x:x, y:y, name:name, type:0, owner:owner, zones:[]};
     for (var i = 0; i < 16; i++) {
         region.zones[i] = [];
         for (var k = 0; k < 16; k++) {
@@ -119,22 +124,42 @@ findResources = function(zone, region) {
   }
 }
 
-let chunk = [];
-for (var i = 0; i < 16; i++) {
-    chunk[i] = [];
-    for (var j = 0; j < 16; j++) {
-        chunk[i][j] = {relief:Math.floor(Math.random()*4), par2:Math.floor(Math.random()*10), owner:0};
-    }
-}
-
 deleteProblemZones = function(region) {
   for (var k = 0; k < 16; k++) {
     for (var l = 0; l < 16; l++) {
       if (region.zones[k][l].problems > 4) {
         region.zones[k][l] = createZone('nature');
+        region.zones[k][l].relief = 2;
+        region.zones[k][l].resourceType = 0;
       }
     }
   }
+}
+
+changeRegionStatus = function(region) {
+  let temp = 0;
+  for (var k = 0; k < 16; k++) {
+    for (var l = 0; l < 16; l++) {
+      if (region.zones[k][l].type != 'nature') {
+        temp += 1;
+      }
+    }
+  }
+  if (temp > 0) {
+    region.type = 'village';
+  }
+  if (temp > 10) {
+    region.type = 'city';
+  }
+}
+
+let chunk = [];
+for (var i = 0; i < 16; i++) {
+    chunk[i] = [];
+    for (var j = 0; j < 16; j++) {
+      // 0 1 море и суша 2 город 3 деревня
+        chunk[i][j] = {relief:Math.floor(Math.random()*2), owner:0};
+    }
 }
 
 //console.log(world1);
@@ -171,6 +196,20 @@ io.sockets.on('connection', function(socket) {
 
 	socket.on('signin', function(data) {
 		socket.emit('signinResponce', {success:true});
+    //инициализация столицы
+    capx = Math.floor(Math.random()*14) + 1;
+    capy = Math.floor(Math.random()*14) + 1;
+    chunk[capx][capy] = createRegion(capx, capy, 'Столица', data.name);
+    chunk[capx][capy].type = 'city';
+    chunk[capx-1][capy] = createRegion(capx-1, capy, 'testname', data.name);
+    chunk[capx-1][capy-1] = createRegion(capx-1, capy-1, 'testname', data.name);
+    chunk[capx-1][capy+1] = createRegion(capx-1, capy+1, 'testname', data.name);
+    chunk[capx][capy-1] = createRegion(capx, capy-1, 'testname', data.name);
+    chunk[capx][capy+1] = createRegion(capx, capy+1, 'testname', data.name);
+    chunk[capx+1][capy] = createRegion(capx+1, capy, 'testname', data.name);
+    chunk[capx+1][capy-1] = createRegion(capx+1, capy-1, 'testname', data.name);
+    chunk[capx+1][capy+1] = createRegion(capx+1, capy+1, 'testname', data.name);
+    chunk[capx][capy].zones[Math.floor(Math.random()*15)][Math.floor(Math.random()*15)] = createZone('palace');
 	});
 
   socket.on('goToRegion', function(data) {
@@ -194,6 +233,8 @@ io.sockets.on('connection', function(socket) {
         //общерегиональные операции
         if (chunk[i][j].owner != 0) {
           deleteProblemZones(chunk[i][j]);
+          //преобразование в деревню и город
+          changeRegionStatus(chunk[i][j]);
         }
         //работа
         for (var k = 0; k < 16; k++) {
@@ -230,12 +271,3 @@ io.sockets.on('connection', function(socket) {
   });
 
 });
-
-// let reg1;
-// reg1 = createRegion(23, 34, 'city1', 'USA');
-// reg1.zones[10][5] = createZone('industrial');
-// console.log(reg1.zones[10][5].resources);
-// console.log(reg1.zones[10][5].products);
-// work(reg1.zones[10][5]);
-// console.log(reg1.zones[10][5].resources);
-// console.log(reg1.zones[10][5].products);

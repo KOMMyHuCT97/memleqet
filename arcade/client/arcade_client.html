@@ -84,16 +84,16 @@
     current_world = data;
     for (var i = 0; i < box; i++) {
       for (var j = 0; j < box; j++) {
-        if (data[i][j].relief === 0) {
+        if (data[i][j].relief == 0) {
           ctx.drawImage(world, box*0, box*0, box, box, box*i, box*j, box, box);
         }
-        else if (data[i][j].relief === 1) {
+        else if ((data[i][j].relief == 1)|(data[i][j].type == 0)) {
           ctx.drawImage(world, box*1, box*0, box, box, box*i, box*j, box, box);
         }
-        else if (data[i][j].relief === 2) {
+        else if (data[i][j].type == 'city') {
           ctx.drawImage(world, box*0, box*1, box, box, box*i, box*j, box, box);
         }
-        else if (data[i][j].relief === 3) {
+        else if (data[i][j].type == 'village') {
           ctx.drawImage(world, box*1, box*1, box, box, box*i, box*j, box, box);
         }
       }
@@ -138,6 +138,9 @@
           if (data.zones[i][j].resourceType === 2) {
             ctx.drawImage(region_nature_zones, box*1, box*1, box, box, box*i, box*j, box, box);
           }
+          if (data.zones[i][j].relief === 2) {
+            ctx.drawImage(region_build_zones, box*1, box*0, box, box, box*i, box*j, box, box);
+          }
         }
         if (data.zones[i][j].type == 'houses') {
           ctx.drawImage(region_build_zones, box*2, box*1, box, box, box*i, box*j, box, box);
@@ -156,6 +159,9 @@
         }
         if (data.zones[i][j].type == 'building') {
           ctx.drawImage(region_build_zones, box*0, box*0, box, box, box*i, box*j, box, box);
+        }
+        if (data.zones[i][j].type == 'palace') {
+          ctx.drawImage(region_build_zones, box*1, box*2, box, box, box*i, box*j, box, box);
         }
       }
     }
