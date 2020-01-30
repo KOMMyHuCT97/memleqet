@@ -1,16 +1,37 @@
+require("./Gena.js");
+
 createZone = function(type, what) {
     zone = {type:type};
     if (type == 'nature') {
-      // 0 - вода 1 - земля 2 - абандон
-      zone.relief = Math.floor(Math.random()*2);
+      if (what == 0) {
+        if (inChanceOf(90)) {
+          zone.relief = 0;
+        }
+        else {
+          zone.relief = 1;
+        }
+      }
+      if (what == 1) {
+        if (inChanceOf(90)) {
+          zone.relief = 1;
+        }
+        else {
+          zone.relief = 0;
+        }
+      }
       // 0 - немае ресуроу 1 - руда 2 - плодородная земля
-      zone.resourceType = Math.floor(Math.random()*3);
+      if (inChanceOf(15)) {
+        zone.resourceType = 1;
+      }
+      if (inChanceOf(5)) {
+        zone.resourceType = 2;
+      }
       if (zone.relief == 0) {
         zone.resourceType = 0;
       }
-      if (zone.resourceType != 0) {
-        zone.resourceAmount = 100;
-      }
+      // if (zone.resourceType != 0) {
+      //   zone.resourceAmount = 100;
+      // }
     }
     if (type == 'fields') {
       zone.resources = [];
@@ -70,7 +91,8 @@ createRegion = function(x, y, name, owner) {
     for (var i = 0; i < 16; i++) {
         region.zones[i] = [];
         for (var k = 0; k < 16; k++) {
-            region.zones[i][k] = createZone('nature');
+          // КОСТЫЛИНА
+            region.zones[i][k] = createZone('nature', chunk[x][y].relief);
         }
     }
     return region;
@@ -158,8 +180,26 @@ for (var i = 0; i < 16; i++) {
     chunk[i] = [];
     for (var j = 0; j < 16; j++) {
       // 0 1 море и суша 2 город 3 деревня
-        chunk[i][j] = {relief:Math.floor(Math.random()*2), owner:0};
+        //chunk[i][j] = {relief:Math.floor(Math.random()*2), owner:0};
+        chunk[i][j] = {relief:0, owner:0};
+        if (inChanceOf(5)) {
+            chunk[i][j].relief = 1;
+            chunk[i][j].owner = 0;
+        } else {
+            chunk[i][j].relief = 0;
+            chunk[i][j].owner = 0;
+        }
     }
+}
+
+for (var m = 0; m <= 7; m++) {
+  for (var i = 1; i < 14; i++) {
+      for (var k = 1; k < 14; k++) {
+          if (chunk[i][k].relief == 1) {
+              chunk[i + randToward()][k + randToward()].relief = 1;
+          }
+      }
+  }
 }
 
 //console.log(world1);
@@ -215,10 +255,8 @@ io.sockets.on('connection', function(socket) {
   socket.on('goToRegion', function(data) {
     if (chunk[data.x][data.y].owner == 0) {
       chunk[data.x][data.y] = createRegion(data.x, data.y, 'testname', data.user)
-      //console.log(chunk[data.x][data.y]);
     }
 		socket.emit('goToRegionResponce', chunk[data.x][data.y]);
-    console.log("ask for region");
 	});
 
   socket.on('newBuild', function(data) {

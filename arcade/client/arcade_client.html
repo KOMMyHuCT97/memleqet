@@ -13,6 +13,7 @@
     </div>
     <div id="gamediv" style="display:none;">
       <canvas id="ctx" width="256" height="256"></canvas>
+      <div>Общая инфа</div>
       <div id="info" style="width:500px;height:100px;overflow-y:scroll">
         инфо
       </div>
@@ -120,48 +121,50 @@
 
   //отрисовка региона
   socket.on('goToRegionResponce', function(data) {
-    zonesdiv.style.display = 'inline-block';
-    canvmode = 'region';
-    current_region = data;
-    for (var i = 0; i < box; i++) {
-      for (var j = 0; j < box; j++) {
-        if (data.zones[i][j].type == 'nature') {
-          if (data.zones[i][j].relief === 0) {
-            ctx.drawImage(region_nature_zones, box*0, box*0, box, box, box*i, box*j, box, box);
+    if (data != 0) {
+      zonesdiv.style.display = 'inline-block';
+      canvmode = 'region';
+      current_region = data;
+      for (var i = 0; i < box; i++) {
+        for (var j = 0; j < box; j++) {
+          if (data.zones[i][j].type == 'nature') {
+            if (data.zones[i][j].relief === 0) {
+              ctx.drawImage(region_nature_zones, box*0, box*0, box, box, box*i, box*j, box, box);
+            }
+            else if (data.zones[i][j].relief === 1) {
+              ctx.drawImage(region_nature_zones, box*1, box*0, box, box, box*i, box*j, box, box);
+            }
+            if (data.zones[i][j].resourceType === 1) {
+              ctx.drawImage(region_nature_zones, box*0, box*1, box, box, box*i, box*j, box, box);
+            }
+            if (data.zones[i][j].resourceType === 2) {
+              ctx.drawImage(region_nature_zones, box*1, box*1, box, box, box*i, box*j, box, box);
+            }
+            if (data.zones[i][j].relief === 2) {
+              ctx.drawImage(region_build_zones, box*1, box*0, box, box, box*i, box*j, box, box);
+            }
           }
-          else if (data.zones[i][j].relief === 1) {
-            ctx.drawImage(region_nature_zones, box*1, box*0, box, box, box*i, box*j, box, box);
+          if (data.zones[i][j].type == 'houses') {
+            ctx.drawImage(region_build_zones, box*2, box*1, box, box, box*i, box*j, box, box);
           }
-          if (data.zones[i][j].resourceType === 1) {
-            ctx.drawImage(region_nature_zones, box*0, box*1, box, box, box*i, box*j, box, box);
+          if (data.zones[i][j].type == 'mine') {
+            ctx.drawImage(region_build_zones, box*0, box*1, box, box, box*i, box*j, box, box);
           }
-          if (data.zones[i][j].resourceType === 2) {
-            ctx.drawImage(region_nature_zones, box*1, box*1, box, box, box*i, box*j, box, box);
+          if (data.zones[i][j].type == 'fields') {
+            ctx.drawImage(region_build_zones, box*2, box*0, box, box, box*i, box*j, box, box);
           }
-          if (data.zones[i][j].relief === 2) {
-            ctx.drawImage(region_build_zones, box*1, box*0, box, box, box*i, box*j, box, box);
+          if (data.zones[i][j].type == 'plant') {
+            ctx.drawImage(region_build_zones, box*1, box*1, box, box, box*i, box*j, box, box);
           }
-        }
-        if (data.zones[i][j].type == 'houses') {
-          ctx.drawImage(region_build_zones, box*2, box*1, box, box, box*i, box*j, box, box);
-        }
-        if (data.zones[i][j].type == 'mine') {
-          ctx.drawImage(region_build_zones, box*0, box*1, box, box, box*i, box*j, box, box);
-        }
-        if (data.zones[i][j].type == 'fields') {
-          ctx.drawImage(region_build_zones, box*2, box*0, box, box, box*i, box*j, box, box);
-        }
-        if (data.zones[i][j].type == 'plant') {
-          ctx.drawImage(region_build_zones, box*1, box*1, box, box, box*i, box*j, box, box);
-        }
-        if (data.zones[i][j].type == 'militia') {
-          ctx.drawImage(region_build_zones, box*0, box*2, box, box, box*i, box*j, box, box);
-        }
-        if (data.zones[i][j].type == 'building') {
-          ctx.drawImage(region_build_zones, box*0, box*0, box, box, box*i, box*j, box, box);
-        }
-        if (data.zones[i][j].type == 'palace') {
-          ctx.drawImage(region_build_zones, box*1, box*2, box, box, box*i, box*j, box, box);
+          if (data.zones[i][j].type == 'militia') {
+            ctx.drawImage(region_build_zones, box*0, box*2, box, box, box*i, box*j, box, box);
+          }
+          if (data.zones[i][j].type == 'building') {
+            ctx.drawImage(region_build_zones, box*0, box*0, box, box, box*i, box*j, box, box);
+          }
+          if (data.zones[i][j].type == 'palace') {
+            ctx.drawImage(region_build_zones, box*1, box*2, box, box, box*i, box*j, box, box);
+          }
         }
       }
     }
