@@ -1,7 +1,7 @@
 require("./Gena.js");
 
 createZone = function(type, what) {
-    zone = {type:type};
+    zone = {type:type, isEconomic:false};
     if (type == 'nature') {
       if (what == 0) {
         if (inChanceOf(90)) {
@@ -34,6 +34,8 @@ createZone = function(type, what) {
       // }
     }
     if (type == 'fields') {
+      zone.isEconomic = true
+      zone.budget = 100;
       zone.resources = [];
       zone.products = [];
       zone.problems = 0;
@@ -41,6 +43,8 @@ createZone = function(type, what) {
       zone.products.push({type:'goods', prodnorm:2, facilyty:0});
     }
     if (type == 'plant') {
+      zone.isEconomic = true
+      zone.budget = 100;
       zone.resources = [];
       zone.products = [];
       zone.problems = 0;
@@ -49,6 +53,8 @@ createZone = function(type, what) {
       zone.products.push({type:'things', prodnorm:3, facilyty:0});
     }
     if (type == 'mine') {
+      zone.isEconomic = true
+      zone.budget = 100;
       zone.resources = [];
       zone.products = [];
       zone.problems = 0;
@@ -56,6 +62,8 @@ createZone = function(type, what) {
       zone.products.push({type:'ores', prodnorm:2, facilyty:0});
     }
     if (type == 'houses') {
+      zone.isEconomic = true
+      zone.budget = 100;
       zone.resources = [];
       zone.products = [];
       zone.problems = 0;
@@ -64,14 +72,19 @@ createZone = function(type, what) {
       zone.products.push({type:'workers', prodnorm:3, facilyty:0});
     }
     if (type == 'militia') {
+      zone.isEconomic = true
+      zone.budget = 100;
       zone.resources = [];
       zone.products = [];
       zone.problems = 0;
       zone.resources.push({type:'goods', neednorm:1, facilyty:1});
       zone.resources.push({type:'things', neednorm:1, facilyty:1});
       zone.resources.push({type:'workers', neednorm:1, facilyty:1});
+      //zone.forces.push({type:1, health:100});
     }
     if (type == 'palace') {
+      zone.isEconomic = true
+      zone.budget = 100;
       zone.resources = [];
       zone.products = [];
       zone.problems = 0;
@@ -96,6 +109,7 @@ createRegion = function(x, y, name, owner) {
         }
     }
     return region;
+    //db.regions.insert(region);
 }
 
 checkResources = function(zone) {
@@ -207,6 +221,9 @@ var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
+// база данных
+//var mongojs = require("mongojs");
+//var db = mongojs('localhost:27017/myDb', ['regions']);
 
 server.listen(3000);
 connections = [];

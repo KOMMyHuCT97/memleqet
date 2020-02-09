@@ -2,7 +2,8 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="client/css/style.css">
+	  <link rel="shortcut icon" href="client/favicon.ico">
     <title>"test"</title>
   </head>
   <body>
@@ -13,7 +14,9 @@
     </div>
     <div id="gamediv" style="display:none;">
       <canvas id="ctx" width="256" height="256"></canvas>
-      <div>Общая инфа</div>
+      <div id = 'common'>
+        общий жигиттер
+      </div>
       <div id="info" style="width:500px;height:100px;overflow-y:scroll">
         инфо
       </div>
@@ -60,6 +63,7 @@
   var info = document.getElementById('info');
   var refresh = document.getElementById('refresh');
   var step = document.getElementById('step');
+  var common = document.getElementById('common');
 
   const canvas = document.getElementById('ctx');
   const ctx = canvas.getContext("2d");
@@ -276,5 +280,48 @@
       info.innerHTML += '<div> проблемность: ' + current_region.zones[mx][my].problems + "</div>"
     }
   }
+
+  stats = function(region) {
+    totalResources = [{type:'goods', amount:0}, {type:'things', amount:0}, {type:'workers', amount:0}, {type:'ores', amount:0}];
+    totalProducts = [{type:'goods', amount:0}, {type:'things', amount:0}, {type:'workers', amount:0}, {type:'ores', amount:0}];
+    for (var i = 0; i < 16; i++) {
+      for (var k = 0; k < 16; k++) {
+        if ((region.zones[i][k].type != 'nature')&(region.zones[i][k].type != 'building')) {
+          for (let resource of region.zones[i][k].resources) {
+            for (let totalResource of totalResources) {
+              if (resource.type == totalResource.type) {
+                totalResource.amount += resource.neednorm;
+              }
+            }
+          }
+          for (let product of region.zones[i][k].products) {
+            for (let totalProduct of totalProducts) {
+              if (product.type == totalProduct.type) {
+                totalProduct.amount += product.prodnorm;
+              }
+            }
+          }
+        }
+      }
+    }
+    for (i of totalResources) {
+      common.innerHTML += '<div> всего ресурса ' + i.type + ' ' + i.amount + "</div>"
+    }
+    for (i of totalProducts) {
+      common.innerHTML += '<div> всего продукта ' + i.type + ' ' + i.amount + "</div>"
+    }
+  }
+
+  setInterval(function refreshInfo() {
+    common.innerHTML = '<div> правитель: ' + user + "</div>"
+    common.innerHTML += '<div> страна: ' + country + "</div>"
+    if (canvmode == 'region') {
+      socket.emit("goToRegion", {x:current_region.x, y:current_region.y, user:user});
+      stats(current_region);
+    }
+    if (canvmode == 'world') {
+      socket.emit("world");
+    }
+  }, 1000/1);
 
 </script>
